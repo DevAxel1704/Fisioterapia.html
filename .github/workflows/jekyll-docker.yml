@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agenda Fisioterapia</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #e3f2fd;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: #1565c0;
+    }
+    .formulario, .agenda, .busqueda, .tutorial {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    label, select, input, textarea, button {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .dias-checkboxes label {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .turno {
+      background: #bbdefb;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .acciones {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .eliminar, .asistio, .editar {
+      background: #1565c0;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .eliminar { background: #e53935; }
+    .asistio { background: #43a047; }
+    .editar { background: #ff9800; }
+    .completado {
+      color: green;
+      font-weight: bold;
+    }
+    .continuar {
+      background: #43a047;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .rever-tutorial {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #0277bd;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 999;
+    }
+    .barra-menu {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto;
+      flex-wrap: wrap;
+    }
+    .barra-menu button {
+      background: #1565c0;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Agenda de Fisioterapia</h1>
+
+  <button class="rever-tutorial" onclick="verTutorial()">📘 Ver tutorial</button>
+
+  <div class="barra-menu visible" id="menuPrincipal">
+    <button onclick="mostrarSeccion('formulario')">➕ Nuevo Paciente</button>
+    <button onclick="mostrarSeccion('agendaContainer')">📋 Ver Agenda</button>
+    <button onclick="mostrarSeccion('busqueda')">🔍 Buscar Paciente</button>
+    <button onclick="mostrarSeccion('reporteDias')">📊 Turnos por Día</button>
+  </div>
+
+  <div class="tutorial" id="tutorial">
+    <h2>¿Cómo usar esta aplicación?</h2>
+    <ol>
+      <li>Completá los datos del paciente: nombre, tipo de fisioterapia, plan, días, etc.</li>
+      <li>Elegí fecha de inicio y de finalización del tratamiento.</li>
+      <li>Elegí la hora del turno y tocá “Agendar”.</li>
+      <li>Usá “+1 Asistió” para llevar el control.</li>
+    </ol>
+    <button class="continuar" onclick="iniciarAplicacion()">✔️ Continuar</button>
+  </div>
+
+  <div class="formulario" id="formulario">
+    <form id="formPaciente" onsubmit="agendarPaciente(event)">
+      <label>Nombre y Apellido:</label>
+      <input type="text" id="nombre" required />
+
+      <label>Tipo de Fisioterapia:</label>
+      <select id="tipo">
+        <option>Rehabilitación</option>
+        <option>Deportiva</option>
+        <option>Neurológica</option>
+      </select>
+
+      <label>Plan de sesiones:</label>
+      <select id="plan">
+        <option value="5">5 sesiones</option>
+        <option value="10">10 sesiones</option>
+        <option value="1xdia">1 día por medio</option>
+        <option value="3xsemana">3 veces por semana</option>
+        <option value="intensivo">Intensivo (lunes a viernes)</option>
+        <option value="personalizado">Personalizado</option>
+      </select>
+
+      <label>Días de atención:</label>
+      <div class="dias-checkboxes">
+        <label><input type="checkbox" value="Lunes"> Lunes</label>
+        <label><input type="checkbox" value="Martes"> Martes</label>
+        <label><input type="checkbox" value="Miércoles"> Miércoles</label>
+        <label><input type="checkbox" value="Jueves"> Jueves</label>
+        <label><input type="checkbox" value="Viernes"> Viernes</label>
+      </div>
+
+      <label>Observaciones médicas:</label>
+      <textarea id="observaciones"></textarea>
+
+      <label>Fecha de inicio:</label>
+      <input type="date" id="fechaInicio" required />
+
+      <label>Fecha de finalización:</label>
+      <input type="date" id="fechaFin" required />
+
+      <label>Hora del turno:</label>
+      <input type="time" id="horaTurno" required />
+
+      <button type="submit">📅 Agendar</button>
+    </form>
+  </div>
+
+  <div class="busqueda" id="busqueda">
+    <h2>🔍 Buscar Paciente</h2>
+    <input type="text" id="buscarInput" placeholder="Escribí un nombre..." oninput="buscarPaciente()" />
+    <div id="resultadosBusqueda"></div>
+  </div>
+
+  <div class="agenda" id="agendaContainer">
+    <div id="agenda"></div>
+  </div>
+
+  <div class="agenda" id="reporteDias">
+    <h2>📊 Turnos por Día</h2>
+    <div id="contenidoReporteDias"></div>
+  </div>
+
+  <script>
+    function obtenerAgenda() {
+      return JSON.parse(localStorage.getItem("agendaFisio")) || {};
+    }
+
+    function guardarAgenda(agenda) {
+      localStorage.setItem("agendaFisio", JSON.stringify(agenda));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (localStorage.getItem("tutorialVisto")) {
+        iniciarAplicacion();
+      } else {
+        document.getElementById("tutorial").classList.add("visible");
+      }
+
+      document.getElementById("plan").addEventListener("change", () => {
+        const plan = document.getElementById("plan").value;
+        const checks = document.querySelectorAll('.dias-checkboxes input');
+        checks.forEach(c => c.checked = false);
+
+        if (plan === "intensivo") {
+          ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"].forEach(dia => {
+            document.querySelector(`input[value="${dia}"]`).checked = true;
+          });
+        } else if (plan === "3xsemana") {
+          ["Lunes", "Miércoles", "Viernes"].forEach(dia => {
+            document.querySelector(`input[value="${dia}"]`).checked = true;
+          });
+        } else if (plan === "1xdia") {
+          ["Lunes", "Miércoles"].forEach(dia => {
+            document.querySelector(`input[value="${dia}"]`).checked = true;
+          });
+        }
+      });
+    });
+
+    function iniciarAplicacion() {
+      localStorage.setItem("tutorialVisto", "true");
+      document.getElementById("tutorial").classList.remove("visible");
+      document.getElementById("formulario").classList.add("visible");
+      document.getElementById("busqueda").classList.add("visible");
+      document.getElementById("agendaContainer").classList.add("visible");
+      document.getElementById("menuPrincipal").classList.add("visible");
+      mostrarTurnos();
+    }
+
+    function verTutorial() {
+      document.getElementById("tutorial").classList.add("visible");
+      document.getElementById("formulario").classList.remove("visible");
+      document.getElementById("busqueda").classList.remove("visible");
+      document.getElementById("agendaContainer").classList.remove("visible");
+      document.getElementById("menuPrincipal").classList.remove("visible");
+      localStorage.removeItem("tutorialVisto");
+    }
+
+    function mostrarSeccion(id) {
+      const secciones = ["formulario", "busqueda", "agendaContainer", "reporteDias"];
+      secciones.forEach(sec => document.getElementById(sec).classList.remove("visible"));
+      document.getElementById(id).classList.add("visible");
+
+      if (id === "reporteDias") {
+        mostrarReportePorDia();
+      }
+    }
+
+    function agendarPaciente(e) {
+      e.preventDefault();
+      const agenda = obtenerAgenda();
+
+      const nombre = document.getElementById("nombre").value;
+      const tipo = document.getElementById("tipo").value;
+      const plan = document.getElementById("plan").value;
+      const observaciones = document.getElementById("observaciones").value;
+      const fechaInicio = document.getElementById("fechaInicio").value;
+      const fechaFin = document.getElementById("fechaFin").value;
+      const horaTurno = document.getElementById("horaTurno").value;
+      const dias = [...document.querySelectorAll('.dias-checkboxes input:checked')].map(d => d.value);
+      const id = Date.now();
+
+      agenda[id] = {
+        nombre, tipo, plan, dias, observaciones,
+        fechaInicio, fechaFin, horaTurno,
+        asistencias: 0
+      };
+
+      guardarAgenda(agenda);
+      mostrarTurnos();
+      e.target.reset();
+      alert("✅ Turno agendado correctamente.");
+    }
+
+    function mostrarTurnos() {
+      const agenda = obtenerAgenda();
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
+
+      Object.entries(agenda).forEach(([id, datos]) => {
+        const sesionesTotales = !isNaN(parseInt(datos.plan)) ? parseInt(datos.plan) : '∞';
+        const completado = !isNaN(parseInt(datos.plan)) && datos.asistencias >= parseInt(datos.plan);
+
+        const div = document.createElement("div");
+        div.className = "turno";
+        div.innerHTML = `
+          <strong>${datos.nombre}</strong>
+          <span>🧾 ${datos.tipo} | ${datos.plan}</span>
+          <span>📅 Del ${datos.fechaInicio} al ${datos.fechaFin}</span>
+          <span>⏰ Hora: ${datos.horaTurno}</span>
+          <span>🗓️ Días: ${datos.dias.join(", ")}</span>
+          <span>📝 ${datos.observaciones}</span>
+          <div class="acciones">
+            <span>${datos.asistencias}/${sesionesTotales} sesiones</span>
+            <button class="asistio" onclick="marcarAsistencia(${id})">+1 Asistió</button>
+            <button class="editar" onclick="editarDias(${id})">✏️ Editar días</button>
+            <button class="eliminar" onclick="eliminarTurno(${id})">Eliminar</button>
+          </div>
+          ${completado ? '<span class="completado">✅ Completado</span>' : ''}
+        `;
+        contenedor.appendChild(div);
+      });
+    }
+
+    function marcarAsistencia(id) {
+      const agenda = obtenerAgenda();
+      agenda[id].asistencias++;
+      guardarAgenda(agenda);
+      mostrarTurnos();
+    }
+
+    function eliminarTurno(id) {
+      if (confirm("¿Eliminar este turno?")) {
+        const agenda = obtenerAgenda();
+        delete agenda[id];
+        guardarAgenda(agenda);
+        mostrarTurnos();
+      }
+    }
+
+    function editarDias(id) {
+      const nuevosDias = prompt("Ingresá los nuevos días separados por coma (ej: Lunes, Miércoles):");
+      if (nuevosDias) {
+        const agenda = obtenerAgenda();
+        agenda[id].dias = nuevosDias.split(",").map(d => d.trim());
+        guardarAgenda(agenda);
+        mostrarTurnos();
+      }
+    }
+
+    function buscarPaciente() {
+      const texto = document.getElementById("buscarInput").value.toLowerCase();
+      const agenda = obtenerAgenda();
+      const resultados = document.getElementById("resultadosBusqueda");
+      resultados.innerHTML = "";
+
+      const coincidencias = Object.entries(agenda).filter(([id, datos]) =>
+        datos.nombre.toLowerCase().includes(texto)
+      );
+
+      if (coincidencias.length === 0) {
+        resultados.innerHTML = "<p>❌ No se encontraron pacientes.</p>";
+        return;
+      }
+
+      coincidencias.forEach(([id, datos]) => {
+        const div = document.createElement("div");
+        div.className = "turno";
+        div.innerHTML = `
+          <strong>${datos.nombre}</strong>
+          <span>🧾 ${datos.tipo} | ${datos.plan}</span>
+          <span>📅 Del ${datos.fechaInicio} al ${datos.fechaFin}</span>
+          <span>⏰ Hora: ${datos.horaTurno}</span>
+          <span>🗓️ Días: ${datos.dias.join(", ")}</span>
+          <span>📝 ${datos.observaciones}</span>
+          <div class="acciones">
+            <span>${datos.asistencias}/${isNaN(parseInt(datos.plan)) ? '∞' : datos.plan} sesiones</span>
+            <button class="asistio" onclick="marcarAsistencia(${id})">+1 Asistió</button>
+            <button class="editar" onclick="editarDias(${id})">✏️ Editar días</button>
+            <button class="eliminar" onclick="eliminarTurno(${id})">Eliminar</button>
+          </div>
+        `;
+        resultados.appendChild(div);
+      });
+    }
+
+    function mostrarReportePorDia() {
+      const agenda = obtenerAgenda();
+      const reporte = {};
+
+      Object.values(agenda).forEach(paciente => {
+        paciente.dias.forEach(dia => {
+          if (!reporte[dia]) {
+            reporte[dia] = [];
+          }
+          reporte[dia].push({
+            nombre: paciente.nombre,
+            hora: paciente.horaTurno
+          });
+        });
+      });
+
+      const contenedor = document.getElementById("contenidoReporteDias");
+      contenedor.innerHTML = "";
+
+      const diasOrdenados = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+      diasOrdenados.forEach(dia => {
+        const pacientes = reporte[dia] || [];
+        const div = document.createElement("div");
+        div.className = "turno";
+        div.innerHTML = `
+          <h3>${dia} (${pacientes.length} paciente${pacientes.length !== 1 ? 's' : ''})</h3>
+          ${pacientes.length === 0 ? "<p>Sin pacientes.</p>" : ""}
+          <ul>
+            ${pacientes.map(p => `<li>${p.hora} - ${p.nombre}</li>`).join("")}
+          </ul>
+        `;
+        contenedor.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
